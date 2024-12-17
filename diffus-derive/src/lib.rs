@@ -4,12 +4,19 @@ use quote::{format_ident, quote};
 
 type Output = proc_macro2::TokenStream;
 
-// Is the field tagged with `#[diffus_ignore]` ?
+// Is the field tagged with `#[diffus(ignore)]` ?
 fn has_ignore_attr(field: &syn::Field) -> bool {
-    field
-        .attrs
-        .iter()
-        .any(|attr| attr.path.is_ident("diffus_ignore"))
+    field.attrs.iter().any(|attr| {
+        if attr.path.is_ident("diffus") {
+            // Ignore failures
+            if let Ok(meta) = attr.parse_args::<syn::Meta>() {
+                if meta.path().is_ident("ignore") {
+                    return true;
+                }
+            }
+        }
+        false
+    })
 }
 
 fn edit_fields(fields: &syn::Fields, lifetime: &syn::Lifetime) -> Output {
@@ -155,7 +162,7 @@ fn input_lifetime(generics: &syn::Generics) -> Option<&syn::Lifetime> {
     lifetime
 }
 
-#[proc_macro_derive(Diffus, attributes(diffus_ignore))]
+#[proc_macro_derive(Diffus, attributes(diffus))]
 pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input: syn::DeriveInput = syn::parse2(proc_macro2::TokenStream::from(input)).unwrap();
 
