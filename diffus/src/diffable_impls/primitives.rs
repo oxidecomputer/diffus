@@ -19,6 +19,8 @@ macro_rules! primitive_impl {
     }
 }
 
+pub(crate) use primitive_impl;
+
 primitive_impl! { i64, i32, i16, i8, u64, u32, u16, u8, char, bool, isize, usize, f32, f64, () }
 
 #[cfg(feature = "uuid-impl")]

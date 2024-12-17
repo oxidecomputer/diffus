@@ -1,5 +1,6 @@
 pub mod borrow;
 pub mod collection;
+pub mod ip;
 pub mod map;
 pub mod option;
 pub mod primitives;
