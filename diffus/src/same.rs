@@ -1,4 +1,5 @@
 use crate::Same;
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddrV4, SocketAddrV6};
 
 impl<T: Same> Same for Option<T> {
     fn same(&self, other: &Self) -> bool {
@@ -22,7 +23,8 @@ macro_rules! same_for_eq {
     }
 }
 
-same_for_eq! { i64, i32, i16, i8, u64, u32, u16, u8, char, str, bool, isize, usize, () }
+same_for_eq! { i64, i32, i16, i8, u64, u32, u16, u8, char, str, bool, String, isize, usize, () }
+same_for_eq! { IpAddr, Ipv4Addr, Ipv6Addr, SocketAddrV4, SocketAddrV6 }
 
 macro_rules! same_for_float {
     ($($typ:ty),*) => {

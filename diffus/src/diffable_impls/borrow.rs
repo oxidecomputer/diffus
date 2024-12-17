@@ -49,6 +49,7 @@ mod tests {
         let left = 13;
         let right = 37;
 
+        #[allow(unused_allocation)]
         if let edit::Edit::Change(diff) = Box::new(left).diff(&Box::new(right)) {
             assert_eq!(*diff, (&13, &37));
         }

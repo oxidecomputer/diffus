@@ -4,24 +4,44 @@ use quote::{format_ident, quote};
 
 type Output = proc_macro2::TokenStream;
 
+// Is the field tagged with `#[diffus(ignore)]` ?
+fn has_ignore_attr(field: &syn::Field) -> bool {
+    field.attrs.iter().any(|attr| {
+        if attr.path.is_ident("diffus") {
+            // Ignore failures
+            if let Ok(meta) = attr.parse_args::<syn::Meta>() {
+                if meta.path().is_ident("ignore") {
+                    return true;
+                }
+            }
+        }
+        false
+    })
+}
+
 fn edit_fields(fields: &syn::Fields, lifetime: &syn::Lifetime) -> Output {
-    let edit_fields = fields.iter().map(|field| match field {
-        syn::Field {
-            ident: Some(ident),
-            ty,
-            vis,
-            ..
-        } => quote! {
-            #vis #ident: diffus::edit::Edit<#lifetime, #ty>
-        },
-        syn::Field {
-            ident: None,
-            ty,
-            vis,
-            ..
-        } => quote! {
-            #vis diffus::edit::Edit<#lifetime, #ty>
-        },
+    let edit_fields = fields.iter().filter_map(|field| {
+        if has_ignore_attr(field) {
+            return None;
+        }
+        Some(match field {
+            syn::Field {
+                ident: Some(ident),
+                ty,
+                vis,
+                ..
+            } => quote! {
+                #vis #ident: diffus::edit::Edit<#lifetime, #ty>
+            },
+            syn::Field {
+                ident: None,
+                ty,
+                vis,
+                ..
+            } => quote! {
+                #vis diffus::edit::Edit<#lifetime, #ty>
+            },
+        })
     });
 
     quote! { #(#edit_fields),* }
@@ -42,10 +62,12 @@ fn field_ident(enumerated_field: (usize, &syn::Field), prefix: &str) -> syn::Ide
 }
 
 fn field_idents(fields: &syn::Fields, prefix: &str) -> Output {
-    let field_idents = fields
-        .iter()
-        .enumerate()
-        .map(|enumerated_field| field_ident(enumerated_field, prefix));
+    let field_idents = fields.iter().enumerate().filter_map(|enumerated_field| {
+        if has_ignore_attr(enumerated_field.1) {
+            return None;
+        }
+        Some(field_ident(enumerated_field, prefix))
+    });
 
     quote! { #(#field_idents),* }
 }
@@ -67,17 +89,22 @@ fn renamed_field_ident(enumerated_field: (usize, &syn::Field), prefix: &str) -> 
 }
 
 fn renamed_field_idents(fields: &syn::Fields, prefix: &str) -> Output {
-    let field_idents = fields
-        .iter()
-        .enumerate()
-        .map(|enumerated_field| renamed_field_ident(enumerated_field, prefix));
+    let field_idents = fields.iter().enumerate().filter_map(|enumerated_field| {
+        if has_ignore_attr(enumerated_field.1) {
+            return None;
+        }
+        Some(renamed_field_ident(enumerated_field, prefix))
+    });
 
     quote! { #(#field_idents),* }
 }
 
 fn matches_all_copy(fields: &syn::Fields) -> Output {
-    let edit_fields_copy = fields.iter().enumerate().map(|_| {
-        quote! { diffus::edit::Edit::Copy(_) }
+    let edit_fields_copy = fields.iter().enumerate().filter_map(|(_, field)| {
+        if has_ignore_attr(field) {
+            return None;
+        }
+        Some(quote! { diffus::edit::Edit::Copy(_) })
     });
 
     quote! {
@@ -86,7 +113,10 @@ fn matches_all_copy(fields: &syn::Fields) -> Output {
 }
 
 fn field_diffs(fields: &syn::Fields) -> Output {
-    let field_diffs = fields.iter().enumerate().map(|(index, field)| {
+    let field_diffs = fields.iter().enumerate().filter_map(|(index, field)| {
+        if has_ignore_attr(field) {
+            return None;
+        }
         let field_name = match field {
             syn::Field {
                 ident: Some(ident), ..
@@ -98,9 +128,9 @@ fn field_diffs(fields: &syn::Fields) -> Output {
             }
         };
 
-        quote! {
+        Some(quote! {
             diffus::Diffable::diff(&self.#field_name, &other.#field_name)
-        }
+        })
     });
 
     quote! { #(#field_diffs),* }
@@ -132,7 +162,7 @@ fn input_lifetime(generics: &syn::Generics) -> Option<&syn::Lifetime> {
     lifetime
 }
 
-#[proc_macro_derive(Diffus)]
+#[proc_macro_derive(Diffus, attributes(diffus))]
 pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input: syn::DeriveInput = syn::parse2(proc_macro2::TokenStream::from(input)).unwrap();
 
@@ -145,10 +175,11 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
     let default_lifetime = syn::parse_str::<syn::Lifetime>("'diffus_a").unwrap();
     let impl_lifetime = data_lifetime.unwrap_or(&default_lifetime);
 
+    // Always derive `Debug`
     #[cfg(feature = "serialize-impl")]
-    let derive_serialize = Some(quote! { #[derive(serde::Serialize)] });
+    let derive_serialize = Some(quote! { #[derive(serde::Serialize, Debug)] });
     #[cfg(not(feature = "serialize-impl"))]
-    let derive_serialize: Option<proc_macro2::TokenStream> = None;
+    let derive_serialize: Option<proc_macro2::TokenStream> = Some(quote! { #[derive(Debug)] });
 
     proc_macro::TokenStream::from(match input.data {
         syn::Data::Enum(syn::DataEnum { variants, .. }) => {
