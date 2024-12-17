@@ -24,50 +24,35 @@ macro_rules! struct_impl {
 
 struct_impl! { Ipv4Addr, Ipv6Addr,  SocketAddrV4, SocketAddrV6}
 
-// TODO: Macro for these enums
-impl<'a> Diffable<'a> for IpAddr {
-    type Diff = enm::Edit<'a, Self, (&'a Self, &'a Self)>;
+macro_rules! ip_impl {
+    ($($typ:tt),*) => {
+        $(
+            impl<'a> Diffable<'a> for $typ {
+                type Diff = enm::Edit<'a, Self, (&'a Self, &'a Self)>;
 
-    fn diff(&'a self, other: &'a Self) -> edit::Edit<Self> {
-        match (self, other) {
-            (left @ IpAddr::V4(a), right @ IpAddr::V4(b)) => match a.diff(&b) {
-                edit::Edit::Copy(_) => edit::Edit::Copy(self),
-                edit::Edit::Change(_) => {
-                    edit::Edit::Change(enm::Edit::AssociatedChanged((left, right)))
+                fn diff(&'a self, other: &'a Self) -> edit::Edit<Self> {
+                    match (self, other) {
+                        (left @ $typ::V4(a), right @ $typ::V4(b)) => match a.diff(&b) {
+                            edit::Edit::Copy(_) => edit::Edit::Copy(self),
+                            edit::Edit::Change(_) => {
+                                edit::Edit::Change(enm::Edit::AssociatedChanged((left, right)))
+                            }
+                        },
+                        (left @ $typ::V6(a), right @ $typ::V6(b)) => match a.diff(&b) {
+                            edit::Edit::Copy(_) => edit::Edit::Copy(self),
+                            edit::Edit::Change(_) => {
+                                edit::Edit::Change(enm::Edit::AssociatedChanged((left, right)))
+                            }
+                        },
+                        _ => edit::Edit::Change(enm::Edit::VariantChanged(self, other)),
+                    }
                 }
-            },
-            (left @ IpAddr::V6(a), right @ IpAddr::V6(b)) => match a.diff(&b) {
-                edit::Edit::Copy(_) => edit::Edit::Copy(self),
-                edit::Edit::Change(_) => {
-                    edit::Edit::Change(enm::Edit::AssociatedChanged((left, right)))
-                }
-            },
-            _ => edit::Edit::Change(enm::Edit::VariantChanged(self, other)),
-        }
+            }
+        )*
     }
 }
 
-impl<'a> Diffable<'a> for SocketAddr {
-    type Diff = enm::Edit<'a, Self, (&'a Self, &'a Self)>;
-
-    fn diff(&'a self, other: &'a Self) -> edit::Edit<Self> {
-        match (self, other) {
-            (left @ SocketAddr::V4(a), right @ SocketAddr::V4(b)) => match a.diff(&b) {
-                edit::Edit::Copy(_) => edit::Edit::Copy(self),
-                edit::Edit::Change(_) => {
-                    edit::Edit::Change(enm::Edit::AssociatedChanged((left, right)))
-                }
-            },
-            (left @ SocketAddr::V6(a), right @ SocketAddr::V6(b)) => match a.diff(&b) {
-                edit::Edit::Copy(_) => edit::Edit::Copy(self),
-                edit::Edit::Change(_) => {
-                    edit::Edit::Change(enm::Edit::AssociatedChanged((left, right)))
-                }
-            },
-            _ => edit::Edit::Change(enm::Edit::VariantChanged(self, other)),
-        }
-    }
-}
+ip_impl! { IpAddr, SocketAddr }
 
 #[cfg(test)]
 mod tests {
