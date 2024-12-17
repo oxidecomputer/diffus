@@ -32,16 +32,16 @@ macro_rules! ip_impl {
 
                 fn diff(&'a self, other: &'a Self) -> edit::Edit<Self> {
                     match (self, other) {
-                        (left @ $typ::V4(a), right @ $typ::V4(b)) => match a.diff(&b) {
+                        ($typ::V4(a), $typ::V4(b)) => match a.diff(&b) {
                             edit::Edit::Copy(_) => edit::Edit::Copy(self),
                             edit::Edit::Change(_) => {
-                                edit::Edit::Change(enm::Edit::AssociatedChanged((left, right)))
+                                edit::Edit::Change(enm::Edit::AssociatedChanged((self, other)))
                             }
                         },
-                        (left @ $typ::V6(a), right @ $typ::V6(b)) => match a.diff(&b) {
+                        ($typ::V6(a), $typ::V6(b)) => match a.diff(&b) {
                             edit::Edit::Copy(_) => edit::Edit::Copy(self),
                             edit::Edit::Change(_) => {
-                                edit::Edit::Change(enm::Edit::AssociatedChanged((left, right)))
+                                edit::Edit::Change(enm::Edit::AssociatedChanged((self, other)))
                             }
                         },
                         _ => edit::Edit::Change(enm::Edit::VariantChanged(self, other)),
