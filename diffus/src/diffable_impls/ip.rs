@@ -54,9 +54,34 @@ macro_rules! ip_impl {
 
 ip_impl! { IpAddr, SocketAddr }
 
+#[cfg(feature = "oxnet-impl")]
+struct_impl! { oxnet::IpNet, oxnet::Ipv4Net, oxnet::Ipv6Net }
+
+#[cfg(feature = "oxnet-impl")]
+impl crate::Same for oxnet::IpNet {
+    fn same(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // Test with `cargo test --features oxnet-impl`
+    #[cfg(feature = "oxnet-impl")]
+    #[test]
+    fn oxnet_copy() {
+        use oxnet::{IpNet, Ipv4Net, Ipv6Net};
+        let localhost_v4 = Ipv4Addr::new(127, 0, 0, 1);
+        let a = IpNet::V4(Ipv4Net::new(localhost_v4, 4).unwrap());
+        let b = a.clone();
+        assert!(a.diff(&b).is_copy());
+        let localhost_v6 = Ipv6Addr::LOCALHOST;
+        let a = IpNet::V6(Ipv6Net::new(localhost_v6, 4).unwrap());
+        let b = a.clone();
+        assert!(a.diff(&b).is_copy());
+    }
 
     #[test]
     fn is_copy() {
