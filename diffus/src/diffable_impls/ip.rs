@@ -24,6 +24,9 @@ macro_rules! struct_impl {
 
 struct_impl! { Ipv4Addr, Ipv6Addr,  SocketAddrV4, SocketAddrV6}
 
+// This differs from the `Option` implementation because there is more than one
+// possible variant that contains data. We just return the outer types in the
+// diff for a simple macro implementation.
 macro_rules! ip_impl {
     ($($typ:tt),*) => {
         $(
@@ -35,13 +38,13 @@ macro_rules! ip_impl {
                         ($typ::V4(a), $typ::V4(b)) => match a.diff(&b) {
                             edit::Edit::Copy(_) => edit::Edit::Copy(self),
                             edit::Edit::Change(_) => {
-                                edit::Edit::Change(enm::Edit::AssociatedChanged((self, other)))
+                                edit::Edit::Change(enm::Edit::AssociatedChanged{before: self, after: other, diff: (self, other)})
                             }
                         },
                         ($typ::V6(a), $typ::V6(b)) => match a.diff(&b) {
                             edit::Edit::Copy(_) => edit::Edit::Copy(self),
                             edit::Edit::Change(_) => {
-                                edit::Edit::Change(enm::Edit::AssociatedChanged((self, other)))
+                                edit::Edit::Change(enm::Edit::AssociatedChanged{before: self, after: other, diff: (self, other)})
                             }
                         },
                         _ => edit::Edit::Change(enm::Edit::VariantChanged(self, other)),
@@ -98,9 +101,14 @@ mod tests {
         let not_localhost_v4 = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 2));
         let localhost_v6 = IpAddr::V6(Ipv6Addr::LOCALHOST);
         let not_localhost_v6 = IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 2));
-        if let Some(enm::Edit::AssociatedChanged((&a, &b))) =
-            localhost_v4.diff(&not_localhost_v4).change()
+        if let Some(enm::Edit::AssociatedChanged {
+            before,
+            after,
+            diff: (&a, &b),
+        }) = localhost_v4.diff(&not_localhost_v4).change()
         {
+            assert_eq!(a, **before);
+            assert_eq!(b, **after);
             assert_eq!(a, localhost_v4);
             assert_eq!(b, not_localhost_v4);
             assert_ne!(a, b);
@@ -108,9 +116,14 @@ mod tests {
             unreachable!();
         }
 
-        if let Some(enm::Edit::AssociatedChanged((&a, &b))) =
-            localhost_v6.diff(&not_localhost_v6).change()
+        if let Some(enm::Edit::AssociatedChanged {
+            before,
+            after,
+            diff: (&a, &b),
+        }) = localhost_v6.diff(&not_localhost_v6).change()
         {
+            assert_eq!(a, **before);
+            assert_eq!(b, **after);
             assert_eq!(a, localhost_v6);
             assert_eq!(b, not_localhost_v6);
             assert_ne!(a, b);

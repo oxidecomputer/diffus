@@ -118,7 +118,7 @@ mod test {
         }
     }
 
-    #[derive(Diffus)]
+    #[derive(Debug, Diffus, PartialEq, Eq)]
     enum NestedTest {
         T { test: Test },
     }
@@ -197,11 +197,26 @@ mod test {
 
         let diff = left.diff(&right);
 
-        if let edit::enm::Edit::AssociatedChanged(EditedNestedTest::T { test }) =
-            diff.change().unwrap()
+        if let edit::enm::Edit::AssociatedChanged {
+            before,
+            after,
+            diff: EditedNestedTest::T { test },
+        } = diff.change().unwrap()
         {
-            if let edit::enm::Edit::AssociatedChanged(EditedTest::C { x }) = test.change().unwrap()
+            assert_eq!(**before, left);
+            assert_eq!(**after, right);
+
+            if let edit::enm::Edit::AssociatedChanged {
+                before,
+                after,
+                diff: EditedTest::C { x },
+                ..
+            } = test.change().unwrap()
             {
+                let NestedTest::T { test: left_inner } = &left;
+                let NestedTest::T { test: right_inner } = &right;
+                assert_eq!(*before, left_inner);
+                assert_eq!(*after, right_inner);
                 assert_eq!(x.change(), Some(&(&32, &43)));
             } else {
                 unreachable!();
@@ -243,9 +258,14 @@ mod test {
             x: 42,
             y: "Frodo Baggins".to_owned(),
         };
-        if let edit::Edit::Change(edit::enm::Edit::AssociatedChanged(EditedTest::Cd { x, y })) =
-            left.diff(&right)
+        if let edit::Edit::Change(edit::enm::Edit::AssociatedChanged {
+            before,
+            after,
+            diff: EditedTest::Cd { x, y },
+        }) = left.diff(&right)
         {
+            assert_eq!(before, &left);
+            assert_eq!(after, &right);
             assert!(x.is_copy());
             assert!(y.is_change());
         } else {

@@ -11,7 +11,11 @@ impl<'a, T: Diffable<'a> + 'a> Diffable<'a> for Option<T> {
             (None, None) => edit::Edit::Copy(self),
             (Some(a), Some(b)) => match a.diff(&b) {
                 edit::Edit::Copy(_) => edit::Edit::Copy(self),
-                edit::Edit::Change(diff) => edit::Edit::Change(enm::Edit::AssociatedChanged(diff)),
+                edit::Edit::Change(diff) => edit::Edit::Change(enm::Edit::AssociatedChanged {
+                    before: self,
+                    after: other,
+                    diff,
+                }),
             },
             _ => edit::Edit::Change(enm::Edit::VariantChanged(self, other)),
         }
@@ -38,7 +42,12 @@ mod tests {
 
     #[test]
     fn associate_change() {
-        if let Some(enm::Edit::AssociatedChanged((&1, &2))) = Some(1).diff(&Some(2)).change() {
+        if let Some(enm::Edit::AssociatedChanged {
+            before: &Some(1),
+            after: &Some(2),
+            diff: (&1, &2),
+        }) = Some(1).diff(&Some(2)).change()
+        {
         } else {
             unreachable!();
         }

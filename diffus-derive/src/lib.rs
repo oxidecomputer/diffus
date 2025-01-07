@@ -243,16 +243,18 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
                         quote! {
                             (
-                                #ident::#variant_ident { #self_field_idents },
-                                #ident::#variant_ident { #other_field_idents }
+                                before @ #ident::#variant_ident { #self_field_idents },
+                                after @ #ident::#variant_ident { #other_field_idents }
                             ) => {
                                 match ( #field_diffs ) {
                                     #matches_all_copy,
                                     ( #just_field_idents ) => {
                                         diffus::edit::Edit::Change(
-                                            diffus::edit::enm::Edit::AssociatedChanged(
-                                                #edited_ident::#variant_ident { #just_field_idents }
-                                            )
+                                            diffus::edit::enm::Edit::AssociatedChanged{
+                                                before,
+                                                after,
+                                                diff: #edited_ident::#variant_ident { #just_field_idents }
+                                            }
                                         )
                                     }
                                 }
@@ -262,16 +264,18 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     syn::Fields::Unnamed(syn::FieldsUnnamed { .. }) => {
                         quote! {
                             (
-                                #ident::#variant_ident( #self_field_idents ),
-                                #ident::#variant_ident( #other_field_idents )
+                                before @ #ident::#variant_ident( #self_field_idents ),
+                                after @ #ident::#variant_ident( #other_field_idents )
                             ) => {
                                 match ( #field_diffs ) {
                                     #matches_all_copy,
                                     ( #just_field_idents ) => {
                                         diffus::edit::Edit::Change(
-                                            diffus::edit::enm::Edit::AssociatedChanged(
-                                                #edited_ident::#variant_ident ( #just_field_idents )
-                                            )
+                                            diffus::edit::enm::Edit::AssociatedChanged{
+                                                before,
+                                                after,
+                                                diff: #edited_ident::#variant_ident ( #just_field_idents )
+                                            }
                                         )
                                     }
                                 }
