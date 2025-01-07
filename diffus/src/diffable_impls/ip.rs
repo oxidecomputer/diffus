@@ -38,13 +38,13 @@ macro_rules! ip_impl {
                         ($typ::V4(a), $typ::V4(b)) => match a.diff(&b) {
                             edit::Edit::Copy(_) => edit::Edit::Copy(self),
                             edit::Edit::Change(_) => {
-                                edit::Edit::Change(enm::Edit::AssociatedChanged{before: self, after: other, diff: (self, other)})
+                                edit::Edit::Change(enm::Edit::AssociatedChanged{ before: self, after: other, diff: (self, other) })
                             }
                         },
                         ($typ::V6(a), $typ::V6(b)) => match a.diff(&b) {
                             edit::Edit::Copy(_) => edit::Edit::Copy(self),
                             edit::Edit::Change(_) => {
-                                edit::Edit::Change(enm::Edit::AssociatedChanged{before: self, after: other, diff: (self, other)})
+                                edit::Edit::Change(enm::Edit::AssociatedChanged{ before: self, after: other, diff: (self, other) })
                             }
                         },
                         _ => edit::Edit::Change(enm::Edit::VariantChanged(self, other)),
