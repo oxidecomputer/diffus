@@ -1,7 +1,6 @@
 #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
 #[derive(Debug, Eq, PartialEq)]
 pub enum Edit<'a, T: ?Sized, Diff> {
-    Copy(&'a T),
     VariantChanged(&'a T, &'a T),
     AssociatedChanged {
         before: &'a T,
@@ -11,14 +10,6 @@ pub enum Edit<'a, T: ?Sized, Diff> {
 }
 
 impl<'a, T: ?Sized, Diff> Edit<'a, T, Diff> {
-    pub fn is_copy(&self) -> bool {
-        if let Self::Copy(_) = self {
-            true
-        } else {
-            false
-        }
-    }
-
     pub fn is_variant_changed(&self) -> bool {
         if let Self::VariantChanged(_, _) = self {
             true
