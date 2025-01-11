@@ -25,7 +25,7 @@ macro_rules! set_impl {
                         .collect::<$diff_type<_, _>>();
 
                     if value_diffs.iter().any(|(_, edit)| !edit.is_copy()) {
-                        Edit::Change(value_diffs)
+                        Edit::Change{before: self, after: other, diff: value_diffs}
                     } else {
                         Edit::Copy(self)
                     }
@@ -58,7 +58,7 @@ mod tests {
         let unity: std::collections::HashSet<_, _> = [1, 2, 3].iter().cloned().collect();
         let not_unity: std::collections::HashSet<_, _> = [1, 2, 4].iter().cloned().collect();
 
-        if let Edit::Change(diff) = unity.diff(&not_unity) {
+        if let Edit::Change { diff, .. } = unity.diff(&not_unity) {
             assert!(diff[&1].is_copy());
             assert!(diff[&2].is_copy());
             assert!(diff[&3].is_remove());

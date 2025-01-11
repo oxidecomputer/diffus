@@ -11,7 +11,7 @@ macro_rules! primitive_impl {
                     if self.same(other) {
                         edit::Edit::Copy(self)
                     } else {
-                        edit::Edit::Change((self, other))
+                        edit::Edit::Change{before: self, after: other, diff: (self, other)}
                     }
                 }
             }

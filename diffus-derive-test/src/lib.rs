@@ -20,10 +20,14 @@ mod test {
 
     #[test]
     fn vis_check() {
-        if let edit::Edit::Change(hide::EditedInside {
-            p: edit::Edit::Change(diff),
+        if let edit::Edit::Change {
+            diff:
+                hide::EditedInside {
+                    p: edit::Edit::Change { diff, .. },
+                    ..
+                },
             ..
-        }) = hide::Inside::new(0).diff(&hide::Inside::new(1))
+        } = hide::Inside::new(0).diff(&hide::Inside::new(1))
         {
             assert_eq!(diff, (&0, &1));
         } else {
@@ -70,14 +74,18 @@ mod test {
 
         use edit::{self, collection};
 
-        if let edit::Edit::Change(diff) = diff {
+        if let edit::Edit::Change { diff, .. } = diff {
             let diff = diff.into_iter().collect::<Vec<_>>();
 
             if let (
-                &collection::Edit::Change(EditedIdentified {
-                    id: edit::Edit::Copy(&2),
-                    value: edit::Edit::Change((&0, &1)),
-                }),
+                &collection::Edit::Change {
+                    diff:
+                        EditedIdentified {
+                            id: edit::Edit::Copy(&2),
+                            value: edit::Edit::Change { diff: (&0, &1), .. },
+                        },
+                    ..
+                },
                 &collection::Edit::Remove(&Identified { id: 3, value: 0 }),
                 &collection::Edit::Copy(&Identified { id: 4, value: 0 }),
                 &collection::Edit::Insert(&Identified { id: 3, value: 0 }),
@@ -100,15 +108,19 @@ mod test {
 
         use edit::{self, collection};
 
-        if let edit::Edit::Change(diff) = diff {
+        if let edit::Edit::Change { diff, .. } = diff {
             let diff = diff.into_iter().collect::<Vec<_>>();
 
             assert_eq!(diff.len(), 1);
 
-            if let &collection::Edit::Change(EditedIdentified {
-                id: edit::Edit::Copy(&1),
-                value: edit::Edit::Change((&0, &1)),
-            }) = &diff[0]
+            if let &collection::Edit::Change {
+                diff:
+                    EditedIdentified {
+                        id: edit::Edit::Copy(&1),
+                        value: edit::Edit::Change { diff: (&0, &1), .. },
+                    },
+                ..
+            } = &diff[0]
             {
             } else {
                 unreachable!()
@@ -258,11 +270,15 @@ mod test {
             x: 42,
             y: "Frodo Baggins".to_owned(),
         };
-        if let edit::Edit::Change(edit::enm::Edit::AssociatedChanged {
-            before,
-            after,
-            diff: EditedTest::Cd { x, y },
-        }) = left.diff(&right)
+        if let edit::Edit::Change {
+            diff:
+                edit::enm::Edit::AssociatedChanged {
+                    before,
+                    after,
+                    diff: EditedTest::Cd { x, y },
+                },
+            ..
+        } = left.diff(&right)
         {
             assert_eq!(before, &left);
             assert_eq!(after, &right);
@@ -280,7 +296,11 @@ mod test {
             y: "Bilbo Baggins".to_owned(),
         };
         let right = Test::B("Frodo Baggins".to_owned());
-        if let edit::Edit::Change(edit::enm::Edit::VariantChanged(l, r)) = left.diff(&right) {
+        if let edit::Edit::Change {
+            diff: edit::enm::Edit::VariantChanged(l, r),
+            ..
+        } = left.diff(&right)
+        {
             assert_eq!(&left, l);
             assert_eq!(&right, r);
         } else {

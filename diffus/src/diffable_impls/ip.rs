@@ -14,7 +14,11 @@ macro_rules! struct_impl {
                     if self == other {
                         edit::Edit::Copy(self)
                     } else {
-                        edit::Edit::Change((self, other))
+                        edit::Edit::Change {
+                            before: self,
+                            after: other,
+                            diff: (self, other)
+                        }
                     }
                 }
             }
@@ -37,17 +41,37 @@ macro_rules! ip_impl {
                     match (self, other) {
                         ($typ::V4(a), $typ::V4(b)) => match a.diff(&b) {
                             edit::Edit::Copy(_) => edit::Edit::Copy(self),
-                            edit::Edit::Change(_) => {
-                                edit::Edit::Change(enm::Edit::AssociatedChanged{ before: self, after: other, diff: (self, other) })
+                            edit::Edit::Change{..} => {
+                                edit::Edit::Change{
+                                    before: self,
+                                    after: other,
+                                    diff: enm::Edit::AssociatedChanged{
+                                        before: self,
+                                        after: other,
+                                        diff: (self, other)
+                                    }
+                                }
                             }
                         },
                         ($typ::V6(a), $typ::V6(b)) => match a.diff(&b) {
                             edit::Edit::Copy(_) => edit::Edit::Copy(self),
-                            edit::Edit::Change(_) => {
-                                edit::Edit::Change(enm::Edit::AssociatedChanged{ before: self, after: other, diff: (self, other) })
+                            edit::Edit::Change{..} => {
+                                edit::Edit::Change{
+                                    before: self,
+                                    after: other,
+                                    diff: enm::Edit::AssociatedChanged{
+                                        before: self,
+                                        after: other,
+                                        diff: (self, other)
+                                    }
+                                }
                             }
                         },
-                        _ => edit::Edit::Change(enm::Edit::VariantChanged(self, other)),
+                        _ => edit::Edit::Change{
+                            before: self,
+                            after: other,
+                            diff: enm::Edit::VariantChanged(self, other)
+                        },
                     }
                 }
             }

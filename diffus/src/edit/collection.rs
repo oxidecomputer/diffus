@@ -6,7 +6,11 @@ pub enum Edit<'a, T: ?Sized, Diff> {
     Copy(&'a T),
     Insert(&'a T),
     Remove(&'a T),
-    Change(Diff),
+    Change {
+        before: &'a T,
+        after: &'a T,
+        diff: Diff,
+    },
 }
 
 impl<'a, T: Same + ?Sized, Diff> Edit<'a, T, Diff> {
@@ -63,8 +67,8 @@ impl<'a, T: Same + ?Sized, Diff> Edit<'a, T, Diff> {
     }
 
     pub fn change(&self) -> Option<&Diff> {
-        if let Self::Change(value) = self {
-            Some(value)
+        if let Self::Change { diff, .. } = self {
+            Some(diff)
         } else {
             None
         }

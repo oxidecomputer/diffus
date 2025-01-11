@@ -155,7 +155,15 @@ pub(crate) fn lcs_post_change<'a, T: Same + Diffable<'a> + ?Sized + 'a>(
     result.map(|edit| match edit {
         Edit::Same(left, right) => match left.diff(right) {
             edit::Edit::Copy(t) => edit::collection::Edit::Copy(t),
-            edit::Edit::Change(diff) => edit::collection::Edit::Change(diff),
+            edit::Edit::Change {
+                before,
+                after,
+                diff,
+            } => edit::collection::Edit::Change {
+                before,
+                after,
+                diff,
+            },
         },
         Edit::Insert(value) => edit::collection::Edit::Insert(value),
         Edit::Remove(value) => edit::collection::Edit::Remove(value),

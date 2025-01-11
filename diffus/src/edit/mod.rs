@@ -10,7 +10,11 @@ use crate::Diffable;
 #[derive(Debug, PartialEq, Eq)]
 pub enum Edit<'a, T: Diffable<'a> + ?Sized> {
     Copy(&'a T),
-    Change(T::Diff),
+    Change {
+        before: &'a T,
+        after: &'a T,
+        diff: T::Diff,
+    },
 }
 
 impl<'a, T: Diffable<'a> + ?Sized> Edit<'a, T> {
@@ -31,7 +35,7 @@ impl<'a, T: Diffable<'a> + ?Sized> Edit<'a, T> {
     }
 
     pub fn is_change(&self) -> bool {
-        if let Self::Change(_) = self {
+        if let Self::Change { .. } = self {
             true
         } else {
             false
@@ -39,8 +43,8 @@ impl<'a, T: Diffable<'a> + ?Sized> Edit<'a, T> {
     }
 
     pub fn change(&self) -> Option<&T::Diff> {
-        if let Self::Change(value_diff) = self {
-            Some(value_diff)
+        if let Self::Change { diff, .. } = self {
+            Some(diff)
         } else {
             None
         }
@@ -51,7 +55,15 @@ impl<'a, Diff, T: Diffable<'a, Diff = Diff> + 'a> Into<map::Edit<'a, T>> for Edi
     fn into(self) -> map::Edit<'a, T> {
         match self {
             Self::Copy(value) => map::Edit::Copy(value),
-            Self::Change(diff) => map::Edit::Change(diff),
+            Self::Change {
+                before,
+                after,
+                diff,
+            } => map::Edit::Change {
+                before,
+                after,
+                diff,
+            },
         }
     }
 }
