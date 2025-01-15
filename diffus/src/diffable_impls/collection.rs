@@ -24,7 +24,7 @@ macro_rules! collection_impl {
                     if s.iter().all(collection::Edit::is_copy) {
                         edit::Edit::Copy(self)
                     } else {
-                        edit::Edit::Change(s)
+                        edit::Edit::Change{before: self, after: other, diff: s}
                     }
                 }
             }
@@ -49,7 +49,7 @@ mod tests {
         let right = b"MZJAWXU".to_vec();
 
         let diff = left.diff(&right);
-        if let edit::Edit::Change(diff) = diff {
+        if let edit::Edit::Change { diff, .. } = diff {
             use collection::Edit::*;
 
             assert_eq!(

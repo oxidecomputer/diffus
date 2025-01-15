@@ -249,13 +249,15 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                                 match ( #field_diffs ) {
                                     #matches_all_copy,
                                     ( #just_field_idents ) => {
-                                        diffus::edit::Edit::Change(
-                                            diffus::edit::enm::Edit::AssociatedChanged{
+                                        diffus::edit::Edit::Change { 
+                                            before, 
+                                            after,
+                                            diff: diffus::edit::enm::Edit::AssociatedChanged{
                                                 before,
                                                 after,
                                                 diff: #edited_ident::#variant_ident { #just_field_idents }
                                             }
-                                        )
+                                        }
                                     }
                                 }
                             }
@@ -270,13 +272,15 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                                 match ( #field_diffs ) {
                                     #matches_all_copy,
                                     ( #just_field_idents ) => {
-                                        diffus::edit::Edit::Change(
-                                            diffus::edit::enm::Edit::AssociatedChanged{
+                                        diffus::edit::Edit::Change {
+                                            before,
+                                            after,
+                                            diff: diffus::edit::enm::Edit::AssociatedChanged {
                                                 before,
                                                 after,
                                                 diff: #edited_ident::#variant_ident ( #just_field_idents )
                                             }
-                                        )
+                                        }
                                     }
                                 }
                             }
@@ -307,9 +311,12 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     fn diff(&#impl_lifetime self, other: &#impl_lifetime Self) -> diffus::edit::Edit<#impl_lifetime, Self> {
                         match (self, other) {
                             #(#variants_matches,)*
-                            (self_variant, other_variant) => diffus::edit::Edit::Change(diffus::edit::enm::Edit::VariantChanged(
-                                self_variant, other_variant
-                            )),
+                            (self_variant, other_variant) => diffus::edit::Edit::Change {
+                                before: self_variant,
+                                after: other_variant,
+                                diff: diffus::edit::enm::Edit::VariantChanged(
+                                    self_variant, other_variant
+                            )},
                         }
                     }
                 }
@@ -335,9 +342,11 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                             fn diff(&#impl_lifetime self, other: &#impl_lifetime Self) -> diffus::edit::Edit<#impl_lifetime, Self> {
                                 match ( #field_diffs ) {
                                     #matches_all_copy,
-                                    ( #field_idents ) => diffus::edit::Edit::Change(
-                                        #edited_ident { #field_idents }
-                                    )
+                                    ( #field_idents ) => diffus::edit::Edit::Change {
+                                        before: self,
+                                        after: other,
+                                        diff: #edited_ident { #field_idents }
+                                    }
                                 }
                             }
                         }
@@ -354,9 +363,11 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                             fn diff(&#impl_lifetime self, other: &#impl_lifetime Self) -> diffus::edit::Edit<#impl_lifetime, Self> {
                                 match ( #field_diffs ) {
                                     #matches_all_copy,
-                                    ( #field_idents ) => diffus::edit::Edit::Change(
-                                        #edited_ident ( #field_idents )
-                                    )
+                                    ( #field_idents ) => diffus::edit::Edit::Change {
+                                        before: self,
+                                        after: other,
+                                        diff: #edited_ident ( #field_idents )
+                                    }
                                 }
                             }
                         }

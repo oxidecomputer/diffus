@@ -19,7 +19,11 @@ impl<'a> Diffable<'a> for str {
         if s.iter().all(string::Edit::is_copy) {
             edit::Edit::Copy(self)
         } else {
-            edit::Edit::Change(s)
+            edit::Edit::Change {
+                before: self,
+                after: other,
+                diff: s,
+            }
         }
     }
 }
@@ -29,7 +33,11 @@ impl<'a> Diffable<'a> for String {
 
     fn diff(&'a self, other: &'a Self) -> edit::Edit<Self> {
         match self.as_str().diff(other.as_str()) {
-            edit::Edit::Change(diff) => edit::Edit::Change(diff),
+            edit::Edit::Change { diff, .. } => edit::Edit::Change {
+                before: self,
+                after: other,
+                diff,
+            },
             edit::Edit::Copy(_) => edit::Edit::Copy(self),
         }
     }
@@ -47,7 +55,7 @@ mod tests {
         let right = "MZJAWXU".to_owned();
 
         let diff = left.diff(&right);
-        if let edit::Edit::Change(diff) = diff {
+        if let edit::Edit::Change { diff, .. } = diff {
             assert_eq!(
                 diff.into_iter().collect::<Vec<_>>(),
                 vec![
@@ -76,7 +84,7 @@ mod tests {
         let right = "MZJAWXU";
 
         let diff = left.diff(&right);
-        if let edit::Edit::Change(diff) = diff {
+        if let edit::Edit::Change { diff, .. } = diff {
             assert_eq!(
                 diff.into_iter().collect::<Vec<_>>(),
                 vec![

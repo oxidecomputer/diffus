@@ -6,7 +6,11 @@ pub enum Edit<'a, T: Diffable<'a> + ?Sized> {
     Copy(&'a T),
     Insert(&'a T),
     Remove(&'a T),
-    Change(T::Diff),
+    Change {
+        before: &'a T,
+        after: &'a T,
+        diff: T::Diff,
+    },
 }
 
 impl<'a, T: Diffable<'a> + ?Sized> Edit<'a, T> {
@@ -41,7 +45,7 @@ impl<'a, T: Diffable<'a> + ?Sized> Edit<'a, T> {
         }
     }
     pub fn is_change(&self) -> bool {
-        if let Self::Change(_) = self {
+        if let Self::Change { .. } = self {
             true
         } else {
             false
@@ -62,8 +66,8 @@ impl<'a, T: Diffable<'a> + ?Sized> Edit<'a, T> {
         }
     }
     pub fn change(&self) -> Option<&T::Diff> {
-        if let Self::Change(value_diff) = self {
-            Some(value_diff)
+        if let Self::Change { diff, .. } = self {
+            Some(diff)
         } else {
             None
         }

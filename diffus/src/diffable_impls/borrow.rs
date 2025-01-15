@@ -9,7 +9,11 @@ where
 {
     match left.borrow().diff(right.borrow()) {
         edit::Edit::Copy(_) => edit::Edit::Copy(left),
-        edit::Edit::Change(diff) => edit::Edit::Change(diff.into()),
+        edit::Edit::Change { diff, .. } => edit::Edit::Change {
+            before: left,
+            after: right,
+            diff: diff.into(),
+        },
     }
 }
 
@@ -50,7 +54,7 @@ mod tests {
         let right = 37;
 
         #[allow(unused_allocation)]
-        if let edit::Edit::Change(diff) = Box::new(left).diff(&Box::new(right)) {
+        if let edit::Edit::Change { diff, .. } = Box::new(left).diff(&Box::new(right)) {
             assert_eq!(*diff, (&13, &37));
         }
     }
@@ -60,7 +64,7 @@ mod tests {
         let left = 13;
         let right = 37;
 
-        if let edit::Edit::Change(diff) = Rc::new(left).diff(&Rc::new(right)) {
+        if let edit::Edit::Change { diff, .. } = Rc::new(left).diff(&Rc::new(right)) {
             assert_eq!(*diff, (&13, &37));
         }
     }
@@ -70,7 +74,7 @@ mod tests {
         let left = 13;
         let right = 37;
 
-        if let edit::Edit::Change(diff) = Arc::new(left).diff(&Arc::new(right)) {
+        if let edit::Edit::Change { diff, .. } = Arc::new(left).diff(&Arc::new(right)) {
             assert_eq!(*diff, (&13, &37));
         }
     }
@@ -80,7 +84,7 @@ mod tests {
         let left = 13;
         let right = 37;
 
-        if let edit::Edit::Change(diff) = (&left).diff(&(&right)) {
+        if let edit::Edit::Change { diff, .. } = (&left).diff(&(&right)) {
             assert_eq!(diff, (&13, &37));
         }
     }

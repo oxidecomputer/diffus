@@ -25,7 +25,7 @@ macro_rules! map_impl {
                         .collect::<$typ<_, _>>();
 
                     if value_diffs.values().any(|v| !v.is_copy()) {
-                        Edit::Change(value_diffs)
+                        Edit::Change{before: self, after: other, diff: value_diffs}
                     } else {
                         Edit::Copy(self)
                     }
@@ -60,7 +60,7 @@ mod tests {
         let not_unity: std::collections::HashMap<_, _> =
             [(1, 1), (2, 3), (4, 4)].iter().cloned().collect();
 
-        if let Edit::Change(diff) = unity.diff(&not_unity) {
+        if let Edit::Change { diff, .. } = unity.diff(&not_unity) {
             assert!(diff[&1].is_copy());
             assert_eq!(diff[&2].change().unwrap(), &(&2, &3));
             assert!(diff[&3].is_remove());
